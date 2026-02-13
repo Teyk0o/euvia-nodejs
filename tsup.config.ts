@@ -30,8 +30,5 @@ export default defineConfig([
     platform: 'node',
     target: 'node20',
     outDir: 'dist',
-    banner: {
-      js: '#!/usr/bin/env node',
-    },
   },
 ]);

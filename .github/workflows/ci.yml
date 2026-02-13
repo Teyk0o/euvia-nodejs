@@ -86,6 +86,19 @@ jobs:
       - name: Test Docker container
         run: |
           docker compose up -d
-          sleep 10
+
+          # Wait for container to be healthy (max 30 seconds)
+          echo "Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -f http://localhost:3001/health 2>/dev/null; then
+              echo "Server is ready!"
+              break
+            fi
+            echo "Attempt $i/30 failed, retrying in 1 second..."
+            sleep 1
+          done
+
+          # Final check
           curl -f http://localhost:3001/health || exit 1
+
           docker compose down
