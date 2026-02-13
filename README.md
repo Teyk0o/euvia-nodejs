@@ -555,6 +555,41 @@ pnpm run test:watch
 pnpm run test:coverage
 ```
 
+### Testing CI Workflows Locally
+
+Before pushing changes, it's recommended to test GitHub Actions workflows locally using [act](https://github.com/nektos/act). This helps catch CI issues early and saves time by avoiding unnecessary commits.
+
+**Install act:**
+
+```bash
+# macOS
+brew install act
+
+# Linux
+curl -s https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
+
+# Windows (with chocolatey)
+choco install act-cli
+```
+
+**Run workflows locally:**
+
+```bash
+# Test all workflows
+act
+
+# Test specific job
+act -j test
+
+# Test docker build
+act -j docker
+
+# Run with verbose output
+act -v
+```
+
+**Note:** act requires Docker to be running. You may need to provide GitHub secrets via `.secrets` file for certain workflows.
+
 ## Architecture
 
 ```
