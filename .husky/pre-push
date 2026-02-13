@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run type check
+pnpm run typecheck
+
+# Run tests
+pnpm test
+
+# Security audit (allow to continue on warnings)
+pnpm audit --audit-level=high || true

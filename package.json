@@ -1,0 +1,102 @@
+{
+  "name": "@euvia/live",
+  "version": "1.0.0",
+  "description": "Self-hosted, GDPR-compliant real-time visitor analytics for Next.js and React applications",
+  "author": "Euvia Contributors",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "euvia-live": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js",
+      "require": "./dist/server.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md,yml,yaml}\"",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build && pnpm run test",
+    "server": "node dist/cli.js server",
+    "prepare": "husky install || true"
+  },
+  "dependencies": {
+    "commander": "^14.0.3",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "ioredis": "^5.9.3",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.1",
+    "@commitlint/config-conventional": "^20.4.1",
+    "@eslint/js": "^9.17.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.3",
+    "@types/react": "^19.2.14",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
+    "@typescript-eslint/parser": "^8.55.0",
+    "@vitest/coverage-v8": "4.0.18",
+    "eslint": "^9.17.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "react": "^19.2.4",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "react": "^19.2.4"
+  },
+  "keywords": [
+    "analytics",
+    "live-tracking",
+    "visitor-analytics",
+    "rgpd",
+    "gdpr-compliant",
+    "nextjs",
+    "react",
+    "real-time",
+    "websocket",
+    "redis",
+    "self-hosted",
+    "privacy-first"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Teyk0o/euvia-nodejs"
+  },
+  "bugs": {
+    "url": "https://github.com/Teyk0o/euvia-nodejs/issues"
+  },
+  "homepage": "https://github.com/Teyk0o/euvia-nodejs#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

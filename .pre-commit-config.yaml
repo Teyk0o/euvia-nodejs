@@ -1,0 +1,83 @@
+# Pre-commit hooks for @euvia/live
+# See https://pre-commit.com for more information
+
+repos:
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$'
+      - id: end-of-file-fixer
+      - id: check-yaml
+        exclude: 'docker-compose\.yml'
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+
+  # TypeScript/JavaScript linting
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: Commitlint
+        entry: pnpm exec commitlint
+        args: ['--edit']
+        language: system
+        stages: [commit-msg]
+
+      - id: eslint
+        name: ESLint
+        entry: pnpm exec eslint
+        args: ['--fix', '--ext', '.ts,.tsx']
+        language: system
+        types: [typescript, tsx]
+        pass_filenames: true
+
+      - id: typescript-check
+        name: TypeScript Type Check
+        entry: pnpm exec tsc
+        args: ['--noEmit']
+        language: system
+        types: [typescript, tsx]
+        pass_filenames: false
+
+      - id: tests
+        name: Run Tests
+        entry: pnpm test
+        language: system
+        pass_filenames: false
+        stages: [commit]
+
+  # Security checks
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: 'package-lock\.json|pnpm-lock\.yaml'
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+
+  # Dependency security audit
+  - repo: local
+    hooks:
+      - id: npm-audit
+        name: NPM Security Audit
+        entry: bash -c 'pnpm audit --audit-level=moderate || true'
+        language: system
+        pass_filenames: false
+        stages: [push]
+
+# Configuration
+default_language_version:
+  node: system
+
+fail_fast: false

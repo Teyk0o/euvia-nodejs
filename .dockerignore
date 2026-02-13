@@ -1,0 +1,15 @@
+node_modules
+dist
+.git
+.gitignore
+.env
+.env.local
+*.log
+coverage
+.vscode
+.idea
+README.md
+tests
+*.md
+!package.json
+!package-lock.json
