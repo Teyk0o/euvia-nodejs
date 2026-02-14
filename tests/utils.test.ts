@@ -5,7 +5,7 @@ describe('Shared Utils', () => {
   describe('hashPath', () => {
     beforeEach(() => {
       // Mock window for browser environment
-      global.window = {} as any;
+      global.window = {} as typeof global.window;
       global.btoa = (str: string) => Buffer.from(str).toString('base64');
     });
 
@@ -21,7 +21,7 @@ describe('Shared Utils', () => {
     });
 
     it('should return empty string in non-browser environment', () => {
-      delete (global as any).window;
+      delete (global as Record<string, unknown>).window;
       const result = hashPath('/test');
       expect(result).toBe('');
     });
@@ -114,41 +114,41 @@ describe('Shared Utils', () => {
           width: 1920,
           height: 1080,
         },
-      } as any;
+      } as typeof global.window;
     });
 
     it('should return exact match for 1920x1080', () => {
-      global.window.screen = { width: 1920, height: 1080 } as any;
+      global.window.screen = { width: 1920, height: 1080 } as typeof global.window.screen;
       const result = getScreenBucket();
       expect(result).toBe('1920x1080');
     });
 
     it('should return closest match for similar resolution', () => {
-      global.window.screen = { width: 1900, height: 1070 } as any;
+      global.window.screen = { width: 1900, height: 1070 } as typeof global.window.screen;
       const result = getScreenBucket();
       expect(result).toBe('1920x1080');
     });
 
     it('should handle mobile screen sizes', () => {
-      global.window.screen = { width: 375, height: 667 } as any;
+      global.window.screen = { width: 375, height: 667 } as typeof global.window.screen;
       const result = getScreenBucket();
       expect(result).toBe('375x667');
     });
 
     it('should handle 4K resolution', () => {
-      global.window.screen = { width: 2560, height: 1440 } as any;
+      global.window.screen = { width: 2560, height: 1440 } as typeof global.window.screen;
       const result = getScreenBucket();
       expect(result).toBe('2560x1440');
     });
 
     it('should handle tablet resolution', () => {
-      global.window.screen = { width: 1366, height: 768 } as any;
+      global.window.screen = { width: 1366, height: 768 } as typeof global.window.screen;
       const result = getScreenBucket();
       expect(result).toBe('1366x768');
     });
 
     it('should return unknown when window is not defined', () => {
-      delete (global as any).window;
+      delete (global as Record<string, unknown>).window;
       const result = getScreenBucket();
       expect(result).toBe('unknown');
     });

@@ -205,7 +205,7 @@ describe('Server Coverage Tests', () => {
           exec: vi.fn().mockRejectedValue(new Error('Pipeline error')),
         };
 
-        redis.pipeline = vi.fn(() => mockPipeline as any);
+        redis.pipeline = vi.fn(() => mockPipeline as ReturnType<typeof redis.pipeline>);
 
         // Also mock get to avoid additional errors
         const originalGet = redis.get.bind(redis);
