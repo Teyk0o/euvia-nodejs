@@ -11,7 +11,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <EuviaTracker
         serverUrl={process.env.NEXT_PUBLIC_EUVIA_URL || 'ws://localhost:3001'}
         heartbeatInterval={60000}
-        enabled={process.env.NODE_ENV === 'production'}
+        enabled={true}
       />
     </>
   );
