@@ -1,9 +1,8 @@
 # @euvia/live
 
-[![npm version](https://badge.fury.io/js/@euvia%2Flive.svg)](https://www.npmjs.com/package/@euvia/live)
+[![NPM Version](https://img.shields.io/npm/v/%40euvia%2Flive)
+[![NPM Downloads](https://img.shields.io/npm/dw/%40euvia%2Flive)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue)](https://www.typescriptlang.org/)
-[![Coverage](https://img.shields.io/badge/coverage-97.74%25-brightgreen)](https://github.com/Teyk0o/euvia-nodejs)
 
 Self-hosted, GDPR-compliant real-time visitor analytics for Next.js and React applications. Track live visitors with complete privacy and no consent banners required.
 
