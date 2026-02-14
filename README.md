@@ -36,12 +36,6 @@ Watch real-time visitor analytics in action:
 
 ![Live Stats Demo](docs/demos/live-stats.gif)
 
-### Admin Panel
-
-Beautiful, ready-to-use admin dashboard with device breakdown and top pages:
-
-![Admin Panel](docs/demos/custom-panel-admin.png)
-
 ## Examples
 
 Two complete Next.js examples are included to get you started quickly:
@@ -579,7 +573,7 @@ server {
 
 ## Performance
 
-- **Client Bundle**: < 10KB gzipped (tree-shakable)
+- **Client Bundle**: < 20KB gzipped (tree-shakable)
 - **Server Capacity**: 10,000+ concurrent connections
 - **Latency**: < 50ms response time
 - **Memory**: ~50MB base + ~1KB per active visitor
@@ -818,16 +812,6 @@ act -v
 │ (EuviaLiveStats)│
 └─────────────────┘
 ```
-
-## Roadmap
-
-- [ ] Horizontal scaling with Redis Cluster
-- [ ] Historical data export (CSV, JSON)
-- [ ] Custom event tracking
-- [ ] Geographic regions (country-level only)
-- [ ] Referrer tracking (hashed)
-- [ ] Session duration estimation
-- [ ] GraphQL API support
 
 ## Contributing
 
