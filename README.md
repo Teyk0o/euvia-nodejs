@@ -1,9 +1,8 @@
 # @euvia/live
 
-[![npm version](https://badge.fury.io/js/@euvia%2Flive.svg)](https://www.npmjs.com/package/@euvia/live)
+![NPM Version](https://img.shields.io/npm/v/%40euvia%2Flive)
+![NPM Downloads](https://img.shields.io/npm/dw/%40euvia%2Flive)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue)](https://www.typescriptlang.org/)
-[![Coverage](https://img.shields.io/badge/coverage-97.74%25-brightgreen)](https://github.com/Teyk0o/euvia-nodejs)
 
 Self-hosted, GDPR-compliant real-time visitor analytics for Next.js and React applications. Track live visitors with complete privacy and no consent banners required.
 
@@ -35,12 +34,6 @@ Traditional analytics solutions require cookie consent banners and collect perso
 Watch real-time visitor analytics in action:
 
 ![Live Stats Demo](docs/demos/live-stats.gif)
-
-### Admin Panel
-
-Beautiful, ready-to-use admin dashboard with device breakdown and top pages:
-
-![Admin Panel](docs/demos/custom-panel-admin.png)
 
 ## Examples
 
@@ -246,6 +239,70 @@ export default function StatsPage() {
 }
 ```
 
+## Historical Trends & Charts
+
+Euvia provides access to historical time-series data (1h and 24h windows) through the `useEuviaCharts` hook. This flexible approach lets you build custom charts with **any charting library** you prefer.
+
+### Using the Charts Hook
+
+```tsx
+import { EuviaChartsProvider, useEuviaCharts } from '@euvia/live';
+import { LineChart, Line, XAxis, YAxis } from 'recharts'; // or any chart library
+
+function MyCustomChart() {
+  const { data, loading, error } = useEuviaCharts();
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  // Transform data for your chart library
+  const chartData = data.totalVisitors.map((point) => ({
+    time: new Date(point.timestamp).toLocaleTimeString(),
+    visitors: point.value,
+  }));
+
+  return (
+    <LineChart data={chartData}>
+      <XAxis dataKey="time" />
+      <YAxis />
+      <Line dataKey="visitors" stroke="#2196f3" />
+    </LineChart>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <EuviaChartsProvider serverUrl="http://localhost:3001" timeRange="1h" autoRefresh={true}>
+      <MyCustomChart />
+    </EuviaChartsProvider>
+  );
+}
+```
+
+### Chart Library Examples
+
+**With Recharts:**
+
+```bash
+pnpm install recharts
+```
+
+See `examples/nextjs-app-router/components/charts/` for complete Recharts examples.
+
+**With Chart.js:**
+
+```bash
+pnpm install react-chartjs-2 chart.js
+```
+
+**With Victory:**
+
+```bash
+pnpm install victory
+```
+
+The data format is library-agnostic, so you can use any visualization library you prefer!
+
 ## API Reference
 
 ### Client Components
@@ -312,15 +369,90 @@ React hook for live statistics.
 }
 ```
 
+#### `useEuviaCharts()`
+
+React hook for accessing historical time-series data. Must be used within `<EuviaChartsProvider>`.
+
+**Returns:**
+
+```typescript
+{
+  data: HistoricalStats | null;     // Historical data points
+  loading: boolean;                  // Loading state
+  error: string | null;              // Error message if any
+  timeRange: '1h' | '24h';           // Current time range
+  setTimeRange: (range) => void;     // Change time range
+}
+```
+
+**Data Structure:**
+
+```typescript
+interface HistoricalStats {
+  totalVisitors: TimeSeriesDataPoint[];
+  deviceBreakdown: {
+    mobile: TimeSeriesDataPoint[];
+    desktop: TimeSeriesDataPoint[];
+    tablet: TimeSeriesDataPoint[];
+  };
+  topPages: HistoricalPageStats[];
+  timeRange: '1h' | '24h';
+  startTime: number;
+  endTime: number;
+}
+
+interface TimeSeriesDataPoint {
+  timestamp: number; // Unix timestamp in ms
+  value: number; // Visitor count at that time
+}
+
+interface HistoricalPageStats {
+  pageHash: string;
+  originalPath?: string;
+  dataPoints: TimeSeriesDataPoint[];
+}
+```
+
+### Context Providers
+
+#### `<EuviaChartsProvider />`
+
+Context provider for historical charts data. Wrap your chart components with this provider.
+
+**Props:**
+
+| Prop              | Type            | Default  | Description                                     |
+| ----------------- | --------------- | -------- | ----------------------------------------------- |
+| `serverUrl`       | `string`        | required | HTTP server URL (e.g., `http://localhost:3001`) |
+| `timeRange`       | `'1h' \| '24h'` | `'1h'`   | Time window for historical data                 |
+| `autoRefresh`     | `boolean`       | `true`   | Auto-refresh data                               |
+| `refreshInterval` | `number`        | `15000`  | Refresh interval in ms (default: 15 seconds)    |
+| `children`        | `ReactNode`     | required | Child components                                |
+
+**Example:**
+
+```tsx
+import { EuviaChartsProvider, useEuviaCharts } from '@euvia/live';
+
+function App() {
+  return (
+    <EuviaChartsProvider serverUrl="http://localhost:3001" timeRange="1h" autoRefresh={true}>
+      <MyCharts />
+    </EuviaChartsProvider>
+  );
+}
+```
+
 ### Server Configuration
 
 #### Environment Variables
 
 ```bash
-PORT=3001                    # Server port
-REDIS_URL=redis://localhost:6379  # Redis connection URL
-STATS_TTL=300               # Stats TTL in seconds (default: 5 minutes)
-CORS_ORIGINS=*              # Comma-separated allowed origins
+PORT=3001                          # Server port
+REDIS_URL=redis://localhost:6379   # Redis connection URL
+STATS_TTL=300                      # Stats TTL in seconds (default: 5 minutes)
+SNAPSHOT_INTERVAL=10000            # Snapshot interval in ms (default: 10 seconds)
+CORS_ORIGINS=*                     # Comma-separated allowed origins
 ```
 
 #### CLI Commands
@@ -347,7 +479,8 @@ const server = createEuviaServer({
   redisUrl: 'redis://localhost:6379',
   statsTTL: 300,
   corsOrigins: ['http://localhost:3000'],
-  broadcastInterval: 2000,
+  broadcastInterval: 2000, // Live stats broadcast interval (ms)
+  snapshotInterval: 10000, // Historical snapshot capture interval (ms)
 });
 
 await server.start();
@@ -439,7 +572,7 @@ server {
 
 ## Performance
 
-- **Client Bundle**: < 10KB gzipped (tree-shakable)
+- **Client Bundle**: < 20KB gzipped (tree-shakable)
 - **Server Capacity**: 10,000+ concurrent connections
 - **Latency**: < 50ms response time
 - **Memory**: ~50MB base + ~1KB per active visitor
@@ -678,16 +811,6 @@ act -v
 │ (EuviaLiveStats)│
 └─────────────────┘
 ```
-
-## Roadmap
-
-- [ ] Horizontal scaling with Redis Cluster
-- [ ] Historical data export (CSV, JSON)
-- [ ] Custom event tracking
-- [ ] Geographic regions (country-level only)
-- [ ] Referrer tracking (hashed)
-- [ ] Session duration estimation
-- [ ] GraphQL API support
 
 ## Contributing
 

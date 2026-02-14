@@ -12,6 +12,7 @@ export default [
       '*.config.ts',
       'examples/**/*.config.js',
       'examples/**/.next/**',
+      'examples/**/next-env.d.ts',
       'examples/**/dist/**',
       'examples/**/build/**',
       'examples/**/out/**',
