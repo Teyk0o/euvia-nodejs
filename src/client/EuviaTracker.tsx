@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * EuviaTracker - Invisible visitor tracking component
  * RGPD-compliant: anonymous, ephemeral, no consent required
@@ -30,6 +32,8 @@ export function EuviaTracker({
 
   useEffect(() => {
     if (!enabled || typeof window === 'undefined') return;
+
+    console.info('[Euvia] Initializing tracker...');
 
     // Initialize Socket.io client
     const socket = io(serverUrl, {
@@ -86,6 +90,7 @@ export function EuviaTracker({
 
     // Cleanup
     return () => {
+      console.info('[Euvia] Cleaning up tracker...');
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
@@ -94,7 +99,7 @@ export function EuviaTracker({
         socketRef.current.disconnect();
       }
     };
-  }, [serverUrl, heartbeatInterval, enabled, onConnect, onDisconnect, onError]);
+  }, [serverUrl, heartbeatInterval, enabled]);
 
   // Invisible component - renders nothing
   return null;

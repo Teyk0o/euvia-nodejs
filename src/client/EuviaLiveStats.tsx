@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * EuviaLiveStats - Admin component to display live statistics
  */

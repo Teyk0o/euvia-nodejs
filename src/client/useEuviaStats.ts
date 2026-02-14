@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * useEuviaStats - React hook for live statistics
  */
@@ -89,7 +91,7 @@ export function useEuviaStats({
     });
 
     setSocket(newSocket);
-  }, [serverUrl, onConnect, onDisconnect, onError, socket?.connected]);
+  }, [serverUrl, socket?.connected]);
 
   const disconnect = useCallback(() => {
     if (socket) {
@@ -116,7 +118,7 @@ export function useEuviaStats({
     return () => {
       disconnect();
     };
-  }, [autoConnect, connect, disconnect]);
+  }, [autoConnect]);
 
   return {
     stats,
