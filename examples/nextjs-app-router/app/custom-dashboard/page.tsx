@@ -1,14 +1,18 @@
 'use client';
 
 import { useEuviaStats } from '@euvia/live';
-import { useEffect } from 'react';
+import { AllCharts } from '@/components/charts/AllCharts';
+import { useEffect, useState } from 'react';
 
 export default function CustomDashboard() {
+  const [timeRange, setTimeRange] = useState<'1h' | '24h'>('1h');
   const { stats, isConnected, isLoading, error, refresh } = useEuviaStats({
     serverUrl: process.env.NEXT_PUBLIC_EUVIA_URL || 'ws://localhost:3001',
     onConnect: () => console.info('Connected to Euvia'),
     onDisconnect: () => console.info('Disconnected from Euvia'),
   });
+
+  const serverUrl = process.env.NEXT_PUBLIC_EUVIA_URL || 'http://localhost:3001';
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
@@ -113,6 +117,36 @@ export default function CustomDashboard() {
             </div>
           )}
         </div>
+
+        {/* Historical Trends Section */}
+        <section className="mt-12">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Historical Trends</h2>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTimeRange('1h')}
+                className={`px-4 py-2 rounded transition-colors ${
+                  timeRange === '1h'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                Last Hour
+              </button>
+              <button
+                onClick={() => setTimeRange('24h')}
+                className={`px-4 py-2 rounded transition-colors ${
+                  timeRange === '24h'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                Last 24 Hours
+              </button>
+            </div>
+          </div>
+          <AllCharts serverUrl={serverUrl} timeRange={timeRange} autoRefresh={true} />
+        </section>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500">
