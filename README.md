@@ -246,6 +246,70 @@ export default function StatsPage() {
 }
 ```
 
+## Historical Trends & Charts
+
+Euvia provides access to historical time-series data (1h and 24h windows) through the `useEuviaCharts` hook. This flexible approach lets you build custom charts with **any charting library** you prefer.
+
+### Using the Charts Hook
+
+```tsx
+import { EuviaChartsProvider, useEuviaCharts } from '@euvia/live';
+import { LineChart, Line, XAxis, YAxis } from 'recharts'; // or any chart library
+
+function MyCustomChart() {
+  const { data, loading, error } = useEuviaCharts();
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  // Transform data for your chart library
+  const chartData = data.totalVisitors.map((point) => ({
+    time: new Date(point.timestamp).toLocaleTimeString(),
+    visitors: point.value,
+  }));
+
+  return (
+    <LineChart data={chartData}>
+      <XAxis dataKey="time" />
+      <YAxis />
+      <Line dataKey="visitors" stroke="#2196f3" />
+    </LineChart>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <EuviaChartsProvider serverUrl="http://localhost:3001" timeRange="1h" autoRefresh={true}>
+      <MyCustomChart />
+    </EuviaChartsProvider>
+  );
+}
+```
+
+### Chart Library Examples
+
+**With Recharts:**
+
+```bash
+pnpm install recharts
+```
+
+See `examples/nextjs-app-router/components/charts/` for complete Recharts examples.
+
+**With Chart.js:**
+
+```bash
+pnpm install react-chartjs-2 chart.js
+```
+
+**With Victory:**
+
+```bash
+pnpm install victory
+```
+
+The data format is library-agnostic, so you can use any visualization library you prefer!
+
 ## API Reference
 
 ### Client Components
@@ -312,15 +376,90 @@ React hook for live statistics.
 }
 ```
 
+#### `useEuviaCharts()`
+
+React hook for accessing historical time-series data. Must be used within `<EuviaChartsProvider>`.
+
+**Returns:**
+
+```typescript
+{
+  data: HistoricalStats | null;     // Historical data points
+  loading: boolean;                  // Loading state
+  error: string | null;              // Error message if any
+  timeRange: '1h' | '24h';           // Current time range
+  setTimeRange: (range) => void;     // Change time range
+}
+```
+
+**Data Structure:**
+
+```typescript
+interface HistoricalStats {
+  totalVisitors: TimeSeriesDataPoint[];
+  deviceBreakdown: {
+    mobile: TimeSeriesDataPoint[];
+    desktop: TimeSeriesDataPoint[];
+    tablet: TimeSeriesDataPoint[];
+  };
+  topPages: HistoricalPageStats[];
+  timeRange: '1h' | '24h';
+  startTime: number;
+  endTime: number;
+}
+
+interface TimeSeriesDataPoint {
+  timestamp: number; // Unix timestamp in ms
+  value: number; // Visitor count at that time
+}
+
+interface HistoricalPageStats {
+  pageHash: string;
+  originalPath?: string;
+  dataPoints: TimeSeriesDataPoint[];
+}
+```
+
+### Context Providers
+
+#### `<EuviaChartsProvider />`
+
+Context provider for historical charts data. Wrap your chart components with this provider.
+
+**Props:**
+
+| Prop              | Type            | Default  | Description                                     |
+| ----------------- | --------------- | -------- | ----------------------------------------------- |
+| `serverUrl`       | `string`        | required | HTTP server URL (e.g., `http://localhost:3001`) |
+| `timeRange`       | `'1h' \| '24h'` | `'1h'`   | Time window for historical data                 |
+| `autoRefresh`     | `boolean`       | `true`   | Auto-refresh data                               |
+| `refreshInterval` | `number`        | `15000`  | Refresh interval in ms (default: 15 seconds)    |
+| `children`        | `ReactNode`     | required | Child components                                |
+
+**Example:**
+
+```tsx
+import { EuviaChartsProvider, useEuviaCharts } from '@euvia/live';
+
+function App() {
+  return (
+    <EuviaChartsProvider serverUrl="http://localhost:3001" timeRange="1h" autoRefresh={true}>
+      <MyCharts />
+    </EuviaChartsProvider>
+  );
+}
+```
+
 ### Server Configuration
 
 #### Environment Variables
 
 ```bash
-PORT=3001                    # Server port
-REDIS_URL=redis://localhost:6379  # Redis connection URL
-STATS_TTL=300               # Stats TTL in seconds (default: 5 minutes)
-CORS_ORIGINS=*              # Comma-separated allowed origins
+PORT=3001                          # Server port
+REDIS_URL=redis://localhost:6379   # Redis connection URL
+STATS_TTL=300                      # Stats TTL in seconds (default: 5 minutes)
+SNAPSHOT_INTERVAL=10000            # Snapshot interval in ms (default: 10 seconds)
+CORS_ORIGINS=*                     # Comma-separated allowed origins
 ```
 
 #### CLI Commands
@@ -347,7 +486,8 @@ const server = createEuviaServer({
   redisUrl: 'redis://localhost:6379',
   statsTTL: 300,
   corsOrigins: ['http://localhost:3000'],
-  broadcastInterval: 2000,
+  broadcastInterval: 2000, // Live stats broadcast interval (ms)
+  snapshotInterval: 10000, // Historical snapshot capture interval (ms)
 });
 
 await server.start();
