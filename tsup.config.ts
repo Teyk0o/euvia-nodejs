@@ -11,10 +11,14 @@ export default defineConfig([
     sourcemap: true,
     clean: true,
     splitting: false,
-    treeshake: true,
-    minify: true,
-    external: ['react', 'react-dom'],
+    minify: false,
+    external: ['react', 'react-dom', 'socket.io-client'],
     outDir: 'dist',
+    esbuildOptions(options) {
+      options.banner = {
+        js: '"use client";',
+      };
+    },
   },
   // Server bundle
   {
