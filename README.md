@@ -1,7 +1,7 @@
 # @euvia/live
 
-[![NPM Version](https://img.shields.io/npm/v/%40euvia%2Flive)
-[![NPM Downloads](https://img.shields.io/npm/dw/%40euvia%2Flive)
+![NPM Version](https://img.shields.io/npm/v/%40euvia%2Flive)
+![NPM Downloads](https://img.shields.io/npm/dw/%40euvia%2Flive)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 Self-hosted, GDPR-compliant real-time visitor analytics for Next.js and React applications. Track live visitors with complete privacy and no consent banners required.
