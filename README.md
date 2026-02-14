@@ -28,6 +28,68 @@ Traditional analytics solutions require cookie consent banners and collect perso
 - **First-party**: Self-hosted WebSocket connection, no third-party services
 - **No PII**: Zero personal identifiable information collected (no IP, no UUID, no cookies)
 
+## Demo
+
+### Live Stats Dashboard
+
+Watch real-time visitor analytics in action:
+
+![Live Stats Demo](docs/demos/live-stats.gif)
+
+### Admin Panel
+
+Beautiful, ready-to-use admin dashboard with device breakdown and top pages:
+
+![Admin Panel](docs/demos/custom-panel-admin.png)
+
+## Examples
+
+Two complete Next.js examples are included to get you started quickly:
+
+### Next.js App Router Example
+
+Modern Next.js 13+ with App Router, featuring:
+
+- Server and Client Components
+- Custom dashboard with `useEuviaStats` hook
+- Built-in admin panel
+- TypeScript support
+
+**Location**: [`examples/nextjs-app-router/`](examples/nextjs-app-router/)
+
+```bash
+cd examples/nextjs-app-router
+pnpm install
+pnpm run dev  # Runs on http://localhost:3000
+```
+
+### Next.js Pages Router Example
+
+Traditional Next.js setup with Pages Router:
+
+- `_app.tsx` integration
+- Admin dashboard page
+- Compatible with Next.js 12+
+- TypeScript support
+
+**Location**: [`examples/nextjs-pages-router/`](examples/nextjs-pages-router/)
+
+```bash
+cd examples/nextjs-pages-router
+pnpm install
+pnpm run dev  # Runs on http://localhost:3002
+```
+
+Both examples include:
+
+- ✅ Pre-configured Euvia tracker
+- ✅ Admin dashboard pages
+- ✅ Environment variable setup
+- ✅ Tailwind CSS styling
+- ✅ TypeScript configuration
+
+See the [examples README](examples/README.md) for detailed setup instructions.
+
 ## Installation
 
 ```bash
