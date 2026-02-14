@@ -11,5 +11,15 @@ export type { EuviaLiveStatsProps } from './EuviaLiveStats';
 export { useEuviaStats } from './useEuviaStats';
 export type { UseEuviaStatsOptions, UseEuviaStatsReturn } from './useEuviaStats';
 
+export { EuviaChartsProvider, useEuviaCharts } from './EuviaChartsContext';
+export type { EuviaChartsProviderProps } from './EuviaChartsContext';
+
 // Re-export shared types
-export type { VisitorData, LiveStats, PageStats } from '../shared/types';
+export type {
+  VisitorData,
+  LiveStats,
+  PageStats,
+  TimeSeriesDataPoint,
+  HistoricalStats,
+  HistoricalPageStats,
+} from '../shared/types';
