@@ -7,7 +7,14 @@ import express from 'express';
 import { createServer } from 'http';
 import { Server as SocketServer } from 'socket.io';
 import Redis from 'ioredis';
-import type { VisitorData, LiveStats, PageStats } from '../shared/types';
+import type {
+  VisitorData,
+  LiveStats,
+  PageStats,
+  TimeSeriesDataPoint,
+  HistoricalStats,
+  HistoricalPageStats,
+} from '../shared/types';
 import { unhashPath } from '../shared/utils';
 
 export interface EuviaServerConfig {
@@ -16,6 +23,7 @@ export interface EuviaServerConfig {
   statsTTL?: number; // TTL in seconds (default: 300 = 5min)
   corsOrigins?: string[];
   broadcastInterval?: number; // Broadcast stats every N ms (default: 2000)
+  snapshotInterval?: number; // Snapshot capture interval in ms (default: 10000 = 10s)
 }
 
 export class EuviaServer {
@@ -25,6 +33,7 @@ export class EuviaServer {
   private redis: Redis;
   private config: Required<EuviaServerConfig>;
   private broadcastTimer: NodeJS.Timeout | null = null;
+  private snapshotTimer: NodeJS.Timeout | null = null;
 
   // Redis key prefixes
   private readonly VISITOR_KEY = 'euvia:visitor:';
@@ -39,6 +48,8 @@ export class EuviaServer {
       statsTTL: config.statsTTL ?? parseInt(process.env.STATS_TTL || '300', 10),
       corsOrigins: config.corsOrigins ?? (process.env.CORS_ORIGINS?.split(',') || ['*']),
       broadcastInterval: config.broadcastInterval ?? 2000,
+      snapshotInterval:
+        config.snapshotInterval ?? parseInt(process.env.SNAPSHOT_INTERVAL || '10000', 10),
     };
 
     // Initialize Express
@@ -120,6 +131,19 @@ export class EuviaServer {
       socket.on('admin:unsubscribe', () => {
         socket.leave('admin');
         console.info(`[Euvia] Admin unsubscribed: ${socket.id}`);
+      });
+
+      // Historical data request
+      socket.on('admin:history:request', async (timeRange: '1h' | '24h') => {
+        try {
+          const historicalData = await this.getHistoricalStats(timeRange);
+          socket.emit('admin:history:response', historicalData);
+        } catch (error) {
+          console.error('[Euvia] Error fetching historical data:', error);
+          socket.emit('admin:history:error', {
+            message: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
       });
 
       // Handle disconnect
@@ -219,6 +243,148 @@ export class EuviaServer {
     };
   }
 
+  private async captureSnapshot() {
+    try {
+      const stats = await this.getStats();
+      const timestamp = Date.now();
+      const pipeline = this.redis.pipeline();
+
+      console.info(
+        `[Euvia] Capturing snapshot - Total visitors: ${stats.totalVisitors}, Pages: ${stats.topPages.length}`,
+      );
+
+      const createDataPoint = (value: number) => JSON.stringify({ timestamp, value });
+
+      // Store 1h and 24h snapshots
+      pipeline.zadd('euvia:history:1h:total', timestamp, createDataPoint(stats.totalVisitors));
+      pipeline.zadd(
+        'euvia:history:1h:mobile',
+        timestamp,
+        createDataPoint(stats.deviceBreakdown.mobile),
+      );
+      pipeline.zadd(
+        'euvia:history:1h:desktop',
+        timestamp,
+        createDataPoint(stats.deviceBreakdown.desktop),
+      );
+      pipeline.zadd(
+        'euvia:history:1h:tablet',
+        timestamp,
+        createDataPoint(stats.deviceBreakdown.tablet),
+      );
+
+      pipeline.zadd('euvia:history:24h:total', timestamp, createDataPoint(stats.totalVisitors));
+      pipeline.zadd(
+        'euvia:history:24h:mobile',
+        timestamp,
+        createDataPoint(stats.deviceBreakdown.mobile),
+      );
+      pipeline.zadd(
+        'euvia:history:24h:desktop',
+        timestamp,
+        createDataPoint(stats.deviceBreakdown.desktop),
+      );
+      pipeline.zadd(
+        'euvia:history:24h:tablet',
+        timestamp,
+        createDataPoint(stats.deviceBreakdown.tablet),
+      );
+
+      // Store top 5 pages
+      const topPages = stats.topPages.slice(0, 5);
+      for (const page of topPages) {
+        pipeline.zadd(
+          `euvia:history:1h:page:${page.pageHash}`,
+          timestamp,
+          createDataPoint(page.visitors),
+        );
+        pipeline.zadd(
+          `euvia:history:24h:page:${page.pageHash}`,
+          timestamp,
+          createDataPoint(page.visitors),
+        );
+      }
+
+      // Cleanup old data
+      const oneHourAgo = timestamp - 60 * 60 * 1000;
+      const oneDayAgo = timestamp - 24 * 60 * 60 * 1000;
+
+      pipeline.zremrangebyscore('euvia:history:1h:total', '-inf', oneHourAgo);
+      pipeline.zremrangebyscore('euvia:history:1h:mobile', '-inf', oneHourAgo);
+      pipeline.zremrangebyscore('euvia:history:1h:desktop', '-inf', oneHourAgo);
+      pipeline.zremrangebyscore('euvia:history:1h:tablet', '-inf', oneHourAgo);
+
+      pipeline.zremrangebyscore('euvia:history:24h:total', '-inf', oneDayAgo);
+      pipeline.zremrangebyscore('euvia:history:24h:mobile', '-inf', oneDayAgo);
+      pipeline.zremrangebyscore('euvia:history:24h:desktop', '-inf', oneDayAgo);
+      pipeline.zremrangebyscore('euvia:history:24h:tablet', '-inf', oneDayAgo);
+
+      await pipeline.exec();
+    } catch (error) {
+      console.error('[Euvia] Error capturing snapshot:', error);
+    }
+  }
+
+  private async getHistoricalStats(timeRange: '1h' | '24h'): Promise<HistoricalStats> {
+    const now = Date.now();
+    const minTimestamp = timeRange === '1h' ? now - 60 * 60 * 1000 : now - 24 * 60 * 60 * 1000;
+
+    const [totalData, mobileData, desktopData, tabletData, topPages] = await Promise.all([
+      this.redis.zrangebyscore(`euvia:history:${timeRange}:total`, minTimestamp, now),
+      this.redis.zrangebyscore(`euvia:history:${timeRange}:mobile`, minTimestamp, now),
+      this.redis.zrangebyscore(`euvia:history:${timeRange}:desktop`, minTimestamp, now),
+      this.redis.zrangebyscore(`euvia:history:${timeRange}:tablet`, minTimestamp, now),
+      this.getStats().then((stats) => stats.topPages.slice(0, 5)),
+    ]);
+
+    const parseDataPoints = (rawData: string[]): TimeSeriesDataPoint[] => {
+      return rawData
+        .map((raw) => {
+          try {
+            return JSON.parse(raw) as TimeSeriesDataPoint;
+          } catch {
+            return null;
+          }
+        })
+        .filter((dp): dp is TimeSeriesDataPoint => dp !== null);
+    };
+
+    const pageTimeSeries: HistoricalPageStats[] = [];
+    for (const page of topPages) {
+      const pageData = await this.redis.zrangebyscore(
+        `euvia:history:${timeRange}:page:${page.pageHash}`,
+        minTimestamp,
+        now,
+      );
+      pageTimeSeries.push({
+        pageHash: page.pageHash,
+        originalPath: page.originalPath,
+        dataPoints: parseDataPoints(pageData),
+      });
+    }
+
+    return {
+      totalVisitors: parseDataPoints(totalData),
+      deviceBreakdown: {
+        mobile: parseDataPoints(mobileData),
+        desktop: parseDataPoints(desktopData),
+        tablet: parseDataPoints(tabletData),
+      },
+      topPages: pageTimeSeries,
+      timeRange,
+      startTime: minTimestamp,
+      endTime: now,
+    };
+  }
+
+  private startSnapshotCapture() {
+    console.info(`[Euvia] Starting snapshot capture (interval: ${this.config.snapshotInterval}ms)`);
+    this.captureSnapshot(); // Immediate capture
+    this.snapshotTimer = setInterval(() => {
+      this.captureSnapshot();
+    }, this.config.snapshotInterval);
+  }
+
   private startStatsBroadcast() {
     this.broadcastTimer = setInterval(async () => {
       try {
@@ -235,6 +401,9 @@ export class EuviaServer {
       // Ensure Redis is connected
       this.redis.once('ready', () => {
         console.info('[Euvia] Redis connected');
+
+        // Start snapshot capture
+        this.startSnapshotCapture();
 
         // Start HTTP server
         this.httpServer.listen(this.config.port, () => {
@@ -255,6 +424,10 @@ export class EuviaServer {
   public async stop(): Promise<void> {
     if (this.broadcastTimer) {
       clearInterval(this.broadcastTimer);
+    }
+
+    if (this.snapshotTimer) {
+      clearInterval(this.snapshotTimer);
     }
 
     await new Promise<void>((resolve) => {

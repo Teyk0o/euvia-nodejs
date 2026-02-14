@@ -26,6 +26,30 @@ export interface PageStats {
   visitors: number;
 }
 
+export interface TimeSeriesDataPoint {
+  timestamp: number;
+  value: number;
+}
+
+export interface HistoricalPageStats {
+  pageHash: string;
+  originalPath?: string;
+  dataPoints: TimeSeriesDataPoint[];
+}
+
+export interface HistoricalStats {
+  totalVisitors: TimeSeriesDataPoint[];
+  deviceBreakdown: {
+    mobile: TimeSeriesDataPoint[];
+    desktop: TimeSeriesDataPoint[];
+    tablet: TimeSeriesDataPoint[];
+  };
+  topPages: HistoricalPageStats[];
+  timeRange: '1h' | '24h';
+  startTime: number;
+  endTime: number;
+}
+
 export interface SocketEvents {
   // Client → Server
   'visitor:heartbeat': (data: VisitorData) => void;
@@ -38,4 +62,10 @@ export interface SocketEvents {
   // Admin subscription
   'admin:subscribe': () => void;
   'admin:unsubscribe': () => void;
+}
+
+export interface HistoricalSocketEvents extends SocketEvents {
+  'admin:history:request': (timeRange: '1h' | '24h') => void;
+  'admin:history:response': (data: HistoricalStats) => void;
+  'admin:history:error': (error: { message: string }) => void;
 }
